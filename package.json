@@ -2,15 +2,17 @@
   "name": "observability-a2a-agent",
   "version": "1.0.0",
   "description": "A2A Observability GPT Agent with client/server architecture",
-  "main": "dist/agent.js",
+  "main": "dist/server/server.js",
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/agent.js",
-    "dev": "node --loader ts-node/esm src/agent.ts",
-    "client": "node --loader ts-node/esm src/client.ts",
-    "debug:agent": "node --loader ts-node/esm src/agent.ts",
-    "debug:client": "node --loader ts-node/esm src/client.ts"
+    "start": "node dist/server/server.js",
+    "start:server": "node --loader ts-node/esm src/server/server.ts",
+    "start:client": "node --loader ts-node/esm src/client/client.ts",
+    "dev": "node --loader ts-node/esm src/server/server.ts",
+    "dev:server": "node --loader ts-node/esm src/server/server.ts",
+    "dev:client": "node --loader ts-node/esm src/client/client.ts",
+    "test": "npm run start:client"
   },
   "keywords": [
     "a2a",
