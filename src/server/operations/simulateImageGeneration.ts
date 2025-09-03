@@ -1,5 +1,6 @@
 import { Payments } from "@nevermined-io/payments";
 import { generateDeterministicAgentId, generateSessionId } from "./utils.js";
+import { ImageResult } from "../types/operationTypes.js";
 
 /**
  * Helper function to calculate image size in pixels from width and height
@@ -11,9 +12,11 @@ function calculatePixels(width: number, height: number): number {
 export async function simulateImageGeneration(
   payments: Payments,
   prompt: string,
-  credit_amount: number,
+  credit_amount?: number,
+  credit_usd_rate?: number,
+  margin_percent?: number,
   batchId?: string
-): Promise<any> {
+): Promise<ImageResult> {
   console.log(`\nSimulating image generation for: "${prompt}"`);
   
   const agentId = generateDeterministicAgentId();
@@ -25,9 +28,11 @@ export async function simulateImageGeneration(
     sessionid: sessionId,
     planid: process.env.NVM_PLAN_DID || 'did:nv:0000000000000000000000000000000000000000',
     plan_type: process.env.NVM_PLAN_TYPE || 'credit_based',
-    credit_amount: credit_amount,
-    credit_usd_rate: 0.001,
-    credit_price_usd: 0.001 * credit_amount,
+    credit_amount: credit_amount || 0,
+    credit_usd_rate: credit_usd_rate || 1,
+    credit_price_usd: credit_usd_rate || 1 * (credit_amount || 0),
+    margin_percent: margin_percent || 0,
+    is_margin_based: margin_percent ? 1 : 0,
     operation: 'simulated_image_generation',
     batch_id: batchId || '',
     is_batch_request: batchId ? 1 : 0
@@ -45,7 +50,10 @@ export async function simulateImageGeneration(
     "https://v3.fal.media/files/koala/9cnEfODPJLdoKLiM2_pND.png"
   ];
 
-  return await payments.observability.withHeliconeLogging(
+  const requestId = crypto.randomUUID();
+  console.log('Generated Request ID for image generation:', requestId);
+
+  const imageResult = await payments.observability.withHeliconeLogging(
     'ImageGeneratorAgent',
     {
       model: "fal-ai/flux-schnell/text-to-image",
@@ -80,6 +88,33 @@ export async function simulateImageGeneration(
     }),
     (internalResult) => payments.observability.calculateImageUsage(internalResult.pixels),
     'img',
+    requestId,
     customProperties
   );
+  
+  // Handle margin-based pricing if applicable
+  let finalCreditAmount = credit_amount || 0;
+  
+  if (margin_percent && margin_percent > 0) {
+    try {
+      // Wait a moment for Helicone to process the data
+      console.log('Applying margin-based pricing...');
+      const updatedCostData = await payments.observability.applyMarginPricing(requestId, margin_percent);
+      
+      if (updatedCostData) {
+        finalCreditAmount = parseFloat(updatedCostData.credit_amount) || 0;
+        console.log(`Applied ${margin_percent}% margin. Final credits: ${finalCreditAmount}`);
+      }
+    } catch (error) {
+      console.error('Error applying margin pricing:', error);
+    }
+  }
+  
+  // Return result with credit information
+  return {
+    result: imageResult,
+    credits: finalCreditAmount,
+    requestId,
+    isMarginBased: !!(margin_percent && margin_percent > 0)
+  };
 }

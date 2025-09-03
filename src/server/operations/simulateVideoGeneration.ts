@@ -1,5 +1,6 @@
 import { Payments } from "@nevermined-io/payments";
 import { generateDeterministicAgentId, generateSessionId } from "./utils.js";
+import { VideoResult } from "../types/operationTypes.js";
 
 /**
  * Generates the model name based on mode, duration, and version.
@@ -11,9 +12,11 @@ function generateModelName(mode: string, duration: number, version: string): str
 export async function simulateVideoGeneration(
   payments: Payments,
   prompt: string,
-  credit_amount: number,
+  credit_amount?: number,
+  credit_usd_rate?: number,
+  margin_percent?: number,
   batchId?: string
-): Promise<any> {
+): Promise<VideoResult> {
   // Randomly select 5s or 10s duration
   const finalDuration = Math.random() > 0.5 ? 5 : 10;
   
@@ -28,9 +31,11 @@ export async function simulateVideoGeneration(
     sessionid: sessionId,
     planid: process.env.NVM_PLAN_DID || 'did:nv:0000000000000000000000000000000000000000',
     plan_type: process.env.NVM_PLAN_TYPE || 'credit_based',
-    credit_amount: credit_amount,
-    credit_usd_rate: 0.001,
-    credit_price_usd: 0.001 * credit_amount,
+    credit_amount: credit_amount || 0,
+    credit_usd_rate: credit_usd_rate || 1,
+    credit_price_usd: credit_usd_rate || 1 * (credit_amount || 0),
+    margin_percent: margin_percent || 0,
+    is_margin_based: margin_percent ? 1 : 0,
     operation: 'simulated_video_generation',
     batch_id: batchId || '',
     is_batch_request: batchId ? 1 : 0
@@ -47,7 +52,10 @@ export async function simulateVideoGeneration(
   const mode = "std";
   const modelName = generateModelName(mode, finalDuration, "1.6");
 
-  return await payments.observability.withHeliconeLogging(
+  const requestId = crypto.randomUUID();
+  console.log('Generated Request ID for video generation:', requestId);
+
+  const videoResult = await payments.observability.withHeliconeLogging(
     'VideoGeneratorAgent',
     {
       model: modelName,
@@ -80,6 +88,33 @@ export async function simulateVideoGeneration(
     }),
     (internalResult) => payments.observability.calculateVideoUsage(),
     'video',
+    requestId,
     customProperties
   );
+  
+  // Handle margin-based pricing if applicable
+  let finalCreditAmount = credit_amount || 0;
+  
+  if (margin_percent && margin_percent > 0) {
+    try {
+      // Wait a moment for Helicone to process the data
+      console.log('Applying margin-based pricing...');
+      const updatedCostData = await payments.observability.applyMarginPricing(requestId, margin_percent);
+      
+      if (updatedCostData) {
+        finalCreditAmount = parseFloat(updatedCostData.credit_amount) || 0;
+        console.log(`Applied ${margin_percent}% margin. Final credits: ${finalCreditAmount}`);
+      }
+    } catch (error) {
+      console.error('Error applying margin pricing:', error);
+    }
+  }
+  
+  // Return result with credit information
+  return {
+    result: videoResult,
+    credits: finalCreditAmount,
+    requestId,
+    isMarginBased: !!(margin_percent && margin_percent > 0)
+  };
 }

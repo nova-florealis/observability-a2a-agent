@@ -5,6 +5,7 @@
 import { v4 as uuidv4 } from "uuid";
 import type { TaskHandlerResult, Payments } from "@nevermined-io/payments";
 import { callGPT, simulateImageGeneration, simulateSongGeneration, simulateVideoGeneration } from "../operations/index.js";
+import type { GPTResult, ImageResult, SongResult, VideoResult } from "../types/operationTypes.js";
 
 interface ServerConfig {
   planId: string;
@@ -15,22 +16,26 @@ export class TaskHandlers {
 
   async handleGPTTextRequest(userText: string): Promise<TaskHandlerResult> {
     const creditAmount = 5;
+    const creditUsdRate = 1;
+    const marginPercent = 25;
     
     try {
-      const response = await callGPT(this.payments, userText, creditAmount);
+      const response = await callGPT(this.payments, userText, creditAmount, creditUsdRate, marginPercent);
       
       return {
         parts: [
           {
             kind: "text",
-            text: `🤖 GPT Response:\n${response}`,
+            text: `🤖 GPT Response:\n${response.result}`,
           },
         ],
         metadata: {
-          creditsUsed: creditAmount,
+          creditsUsed: response.credits,
           planId: this.serverConfig.planId,
           operationType: "gpt_text",
           prompt: userText,
+          requestId: response.requestId,
+          isMarginBased: response.isMarginBased,
         },
         state: "completed",
       };
@@ -41,22 +46,26 @@ export class TaskHandlers {
 
   async handleImageGenerationRequest(userText: string): Promise<TaskHandlerResult> {
     const creditAmount = 3;
+    const creditUsdRate = 1;
+    const marginPercent = 25;
     
     try {
-      const result = await simulateImageGeneration(this.payments, userText, creditAmount);
+      const result = await simulateImageGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent);
       
       return {
         parts: [
           {
             kind: "text", 
-            text: `🎨 Image Generated:\nSize: ${result.width}x${result.height}\nURL: ${result.url}\nPixels: ${result.pixels}`,
+            text: `🎨 Image Generated:\nSize: ${result.result.width}x${result.result.height}\nURL: ${result.result.url}\nPixels: ${result.result.pixels}`,
           },
         ],
         metadata: {
-          creditsUsed: creditAmount,
+          creditsUsed: result.credits,
           planId: this.serverConfig.planId,
           operationType: "image_generation",
-          imageData: result,
+          imageData: result.result,
+          requestId: result.requestId,
+          isMarginBased: result.isMarginBased,
         },
         state: "completed",
       };
@@ -67,22 +76,26 @@ export class TaskHandlers {
 
   async handleSongGenerationRequest(userText: string): Promise<TaskHandlerResult> {
     const creditAmount = 5;
+    const creditUsdRate = 1;
+    const marginPercent = 25;
     
     try {
-      const result = await simulateSongGeneration(this.payments, userText, creditAmount);
+      const result = await simulateSongGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent);
       
       return {
         parts: [
           {
             kind: "text",
-            text: `🎵 Song Generated:\nTitle: ${result.music.title}\nDuration: ${result.music.duration}s\nURL: ${result.music.audioUrl}`,
+            text: `🎵 Song Generated:\nTitle: ${result.result.music.title}\nDuration: ${result.result.music.duration}s\nURL: ${result.result.music.audioUrl}`,
           },
         ],
         metadata: {
-          creditsUsed: creditAmount,
+          creditsUsed: result.credits,
           planId: this.serverConfig.planId,
           operationType: "song_generation",
-          songData: result,
+          songData: result.result,
+          requestId: result.requestId,
+          isMarginBased: result.isMarginBased,
         },
         state: "completed",
       };
@@ -93,22 +106,26 @@ export class TaskHandlers {
 
   async handleVideoGenerationRequest(userText: string): Promise<TaskHandlerResult> {
     const creditAmount = 8;
+    const creditUsdRate = 1;
+    const marginPercent = 25;
     
     try {
-      const result = await simulateVideoGeneration(this.payments, userText, creditAmount);
+      const result = await simulateVideoGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent);
       
       return {
         parts: [
           {
             kind: "text",
-            text: `🎬 Video Generated:\nDuration: ${result.duration}s\nAspect Ratio: ${result.aspectRatio}\nURL: ${result.url}\nMode: ${result.mode}`,
+            text: `🎬 Video Generated:\nDuration: ${result.result.duration}s\nAspect Ratio: ${result.result.aspectRatio}\nURL: ${result.result.url}\nMode: ${result.result.mode}`,
           },
         ],
         metadata: {
-          creditsUsed: creditAmount,
+          creditsUsed: result.credits,
           planId: this.serverConfig.planId,
           operationType: "video_generation",
-          videoData: result,
+          videoData: result.result,
+          requestId: result.requestId,
+          isMarginBased: result.isMarginBased,
         },
         state: "completed",
       };
@@ -119,27 +136,37 @@ export class TaskHandlers {
 
   async handleCombinedGenerationRequest(userText: string): Promise<TaskHandlerResult> {
     const creditAmount = 15; // Fixed cost for combined operations
+    const creditUsdRate = 1;
+    const marginPercent = 25;
     const batchId = uuidv4();
     
     try {
-      const gptResult = await callGPT(this.payments, userText, creditAmount, batchId);
-      const imageResult = await simulateImageGeneration(this.payments, userText, creditAmount, batchId);
-      const songResult = await simulateSongGeneration(this.payments, userText, creditAmount, batchId);
-      const videoResult = await simulateVideoGeneration(this.payments, userText, creditAmount, batchId);
+      const gptResult = await callGPT(this.payments, userText, creditAmount, creditUsdRate, marginPercent, batchId);
+      const imageResult = await simulateImageGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, batchId);
+      const songResult = await simulateSongGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, batchId);
+      const videoResult = await simulateVideoGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, batchId);
+      
+      // Calculate total credits from all operations
+      const totalCredits = gptResult.credits + imageResult.credits + songResult.credits + videoResult.credits;
       
       return {
         parts: [
           {
             kind: "text",
-            text: `🎯 Combined Generation Complete:\n\n🤖 GPT: ${gptResult}\n\n🎨 Image: ${imageResult.width}x${imageResult.height}\n\n🎵 Song: ${songResult.music.title} (${songResult.music.duration}s)\n\n🎬 Video: ${videoResult.duration}s (${videoResult.aspectRatio})`,
+            text: `🎯 Combined Generation Complete:\n\n🤖 GPT: ${gptResult.result}\n\n🎨 Image: ${imageResult.result.width}x${imageResult.result.height}\n\n🎵 Song: ${songResult.result.music.title} (${songResult.result.music.duration}s)\n\n🎬 Video: ${videoResult.result.duration}s (${videoResult.result.aspectRatio})`,
           },
         ],
         metadata: {
-          creditsUsed: creditAmount,
+          creditsUsed: totalCredits,
           planId: this.serverConfig.planId,
           operationType: "combined_generation",
           batchId,
-          results: { gptResult, imageResult, songResult, videoResult },
+          results: {
+            gpt: { credits: gptResult.credits, requestId: gptResult.requestId, data: gptResult.result },
+            image: { credits: imageResult.credits, requestId: imageResult.requestId, data: imageResult.result },
+            song: { credits: songResult.credits, requestId: songResult.requestId, data: songResult.result },
+            video: { credits: videoResult.credits, requestId: videoResult.requestId, data: videoResult.result }
+          },
         },
         state: "completed",
       };
