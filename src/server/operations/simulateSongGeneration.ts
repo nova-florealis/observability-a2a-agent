@@ -23,7 +23,7 @@ export async function simulateSongGeneration(
     plan_type: process.env.NVM_PLAN_TYPE || 'credit_based',
     credit_amount: credit_amount || 0,
     credit_usd_rate: credit_usd_rate || 1,
-    credit_price_usd: credit_usd_rate || 1 * (credit_amount || 0),
+    credit_price_usd: (credit_usd_rate || 1) * (credit_amount || 0),
     margin_percent: margin_percent || 0,
     is_margin_based: margin_percent ? 1 : 0,
     operation: 'simulated_song_generation',
@@ -78,28 +78,10 @@ export async function simulateSongGeneration(
     customProperties
   );
   
-  // Handle margin-based pricing if applicable
-  let finalCreditAmount = credit_amount || 0;
-  
-  if (margin_percent && margin_percent > 0) {
-    try {
-      // Wait a moment for Helicone to process the data
-      console.log('Applying margin-based pricing...');
-      const updatedCostData = await payments.observability.applyMarginPricing(requestId, margin_percent);
-      
-      if (updatedCostData) {
-        finalCreditAmount = parseFloat(updatedCostData.credit_amount) || 0;
-        console.log(`Applied ${margin_percent}% margin. Final credits: ${finalCreditAmount}`);
-      }
-    } catch (error) {
-      console.error('Error applying margin pricing:', error);
-    }
-  }
-  
   // Return result with credit information
   return {
     result: songResult,
-    credits: finalCreditAmount,
+    credits: credit_amount || 0,
     requestId,
     isMarginBased: !!(margin_percent && margin_percent > 0)
   };

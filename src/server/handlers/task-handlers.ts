@@ -5,6 +5,7 @@
 import { v4 as uuidv4 } from "uuid";
 import type { TaskHandlerResult, Payments } from "@nevermined-io/payments";
 import { callGPT, simulateImageGeneration, simulateSongGeneration, simulateVideoGeneration } from "../operations/index.js";
+import { applyMarginCalculation } from "../operations/utils.js";
 import type { GPTResult, ImageResult, SongResult, VideoResult } from "../types/operationTypes.js";
 
 interface ServerConfig {
@@ -21,6 +22,7 @@ export class TaskHandlers {
     
     try {
       const response = await callGPT(this.payments, userText, creditAmount, creditUsdRate, marginPercent);
+      const finalCredits = await applyMarginCalculation(this.payments, response.requestId);
       
       return {
         parts: [
@@ -30,12 +32,12 @@ export class TaskHandlers {
           },
         ],
         metadata: {
-          creditsUsed: response.credits,
+          creditsUsed: finalCredits,
           planId: this.serverConfig.planId,
           operationType: "gpt_text",
           prompt: userText,
           requestId: response.requestId,
-          isMarginBased: response.isMarginBased,
+          isMarginBased: !!(marginPercent && marginPercent > 0),
         },
         state: "completed",
       };
@@ -51,6 +53,7 @@ export class TaskHandlers {
     
     try {
       const result = await simulateImageGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent);
+      const finalCredits = await applyMarginCalculation(this.payments, result.requestId);
       
       return {
         parts: [
@@ -60,12 +63,12 @@ export class TaskHandlers {
           },
         ],
         metadata: {
-          creditsUsed: result.credits,
+          creditsUsed: finalCredits,
           planId: this.serverConfig.planId,
           operationType: "image_generation",
           imageData: result.result,
           requestId: result.requestId,
-          isMarginBased: result.isMarginBased,
+          isMarginBased: !!(marginPercent && marginPercent > 0),
         },
         state: "completed",
       };
@@ -81,6 +84,7 @@ export class TaskHandlers {
     
     try {
       const result = await simulateSongGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent);
+      const finalCredits = await applyMarginCalculation(this.payments, result.requestId);
       
       return {
         parts: [
@@ -90,12 +94,12 @@ export class TaskHandlers {
           },
         ],
         metadata: {
-          creditsUsed: result.credits,
+          creditsUsed: finalCredits,
           planId: this.serverConfig.planId,
           operationType: "song_generation",
           songData: result.result,
           requestId: result.requestId,
-          isMarginBased: result.isMarginBased,
+          isMarginBased: !!(marginPercent && marginPercent > 0),
         },
         state: "completed",
       };
@@ -105,12 +109,13 @@ export class TaskHandlers {
   }
 
   async handleVideoGenerationRequest(userText: string): Promise<TaskHandlerResult> {
-    const creditAmount = 8;
+    const creditAmount = 1;
     const creditUsdRate = 1;
-    const marginPercent = 25;
+    const marginPercent = 0;
     
     try {
       const result = await simulateVideoGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent);
+      const finalCredits = await applyMarginCalculation(this.payments, result.requestId);
       
       return {
         parts: [
@@ -120,12 +125,12 @@ export class TaskHandlers {
           },
         ],
         metadata: {
-          creditsUsed: result.credits,
+          creditsUsed: finalCredits,
           planId: this.serverConfig.planId,
           operationType: "video_generation",
           videoData: result.result,
           requestId: result.requestId,
-          isMarginBased: result.isMarginBased,
+          isMarginBased: !!(marginPercent && marginPercent > 0),
         },
         state: "completed",
       };
@@ -135,9 +140,9 @@ export class TaskHandlers {
   }
 
   async handleCombinedGenerationRequest(userText: string): Promise<TaskHandlerResult> {
-    const creditAmount = 15; // Fixed cost for combined operations
+    const creditAmount = 2; // Fixed cost for combined operations
     const creditUsdRate = 1;
-    const marginPercent = 25;
+    const marginPercent = 0;
     const batchId = uuidv4();
     
     try {
@@ -146,8 +151,14 @@ export class TaskHandlers {
       const songResult = await simulateSongGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, batchId);
       const videoResult = await simulateVideoGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, batchId);
       
+      // Apply margin calculation for each operation
+      const gptCredits = await applyMarginCalculation(this.payments, gptResult.requestId);
+      const imageCredits = await applyMarginCalculation(this.payments, imageResult.requestId);
+      const songCredits = await applyMarginCalculation(this.payments, songResult.requestId);
+      const videoCredits = await applyMarginCalculation(this.payments, videoResult.requestId);
+      
       // Calculate total credits from all operations
-      const totalCredits = gptResult.credits + imageResult.credits + songResult.credits + videoResult.credits;
+      const totalCredits = gptCredits + imageCredits + songCredits + videoCredits;
       
       return {
         parts: [
@@ -162,10 +173,10 @@ export class TaskHandlers {
           operationType: "combined_generation",
           batchId,
           results: {
-            gpt: { credits: gptResult.credits, requestId: gptResult.requestId, data: gptResult.result },
-            image: { credits: imageResult.credits, requestId: imageResult.requestId, data: imageResult.result },
-            song: { credits: songResult.credits, requestId: songResult.requestId, data: songResult.result },
-            video: { credits: videoResult.credits, requestId: videoResult.requestId, data: videoResult.result }
+            gpt: { credits: gptCredits, requestId: gptResult.requestId, data: gptResult.result },
+            image: { credits: imageCredits, requestId: imageResult.requestId, data: imageResult.result },
+            song: { credits: songCredits, requestId: songResult.requestId, data: songResult.result },
+            video: { credits: videoCredits, requestId: videoResult.requestId, data: videoResult.result }
           },
         },
         state: "completed",
