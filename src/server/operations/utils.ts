@@ -11,15 +11,23 @@ export function generateSessionId(): string {
 
 export async function applyMarginCalculation(
   payments: Payments,
-  requestId: string
+  requestId: string,
+  batchId?: string
 ): Promise<number> {
   try {
-    console.log('Applying margin-based pricing...');
-    const updatedCostData = await payments.observability.applyMarginPricing(requestId);
+    const target = batchId ? `batch ${batchId}` : `request ${requestId}`;
+    console.log(`Applying margin-based pricing to ${target}...`);
+    
+    const updatedCostData = await payments.observability.applyMarginPricing(requestId, batchId);
     
     if (updatedCostData) {
-      const finalCreditAmount = parseFloat(updatedCostData.credit_amount) || 0;
-      console.log(`Applied margin. Final credits: ${finalCreditAmount}`);
+      // For batch operations, the response includes total_credits
+      // For single requests, the response includes the full cost data with credit_amount
+      const finalCreditAmount = batchId 
+        ? (updatedCostData.total_credits || 0)
+        : (parseFloat(updatedCostData.credit_amount) || 0);
+      
+      console.log(`Applied margin to ${target}. Final credits: ${finalCreditAmount}`);
       return finalCreditAmount;
     }
   } catch (error) {

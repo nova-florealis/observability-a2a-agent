@@ -109,8 +109,8 @@ export class TaskHandlers {
   }
 
   async handleVideoGenerationRequest(userText: string): Promise<TaskHandlerResult> {
-    const creditAmount = 1;
-    const creditUsdRate = 1;
+    const creditAmount = 0.5;
+    const creditUsdRate = 0.5;
     const marginPercent = 0;
     
     try {
@@ -142,7 +142,7 @@ export class TaskHandlers {
   async handleCombinedGenerationRequest(userText: string): Promise<TaskHandlerResult> {
     const creditAmount = 2; // Fixed cost for combined operations
     const creditUsdRate = 1;
-    const marginPercent = 0;
+    const marginPercent = 25; // Apply 25% margin to batch
     const batchId = uuidv4();
     
     try {
@@ -151,14 +151,8 @@ export class TaskHandlers {
       const songResult = await simulateSongGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, batchId);
       const videoResult = await simulateVideoGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, batchId);
       
-      // Apply margin calculation for each operation
-      const gptCredits = await applyMarginCalculation(this.payments, gptResult.requestId);
-      const imageCredits = await applyMarginCalculation(this.payments, imageResult.requestId);
-      const songCredits = await applyMarginCalculation(this.payments, songResult.requestId);
-      const videoCredits = await applyMarginCalculation(this.payments, videoResult.requestId);
-      
-      // Calculate total credits from all operations
-      const totalCredits = gptCredits + imageCredits + songCredits + videoCredits;
+      // Apply batch margin calculation once for the entire batch
+      const totalCredits = await applyMarginCalculation(this.payments, gptResult.requestId, batchId);
       
       return {
         parts: [
@@ -173,11 +167,14 @@ export class TaskHandlers {
           operationType: "combined_generation",
           batchId,
           results: {
-            gpt: { credits: gptCredits, requestId: gptResult.requestId, data: gptResult.result },
-            image: { credits: imageCredits, requestId: imageResult.requestId, data: imageResult.result },
-            song: { credits: songCredits, requestId: songResult.requestId, data: songResult.result },
-            video: { credits: videoCredits, requestId: videoResult.requestId, data: videoResult.result }
+            gpt: { credits: 0, requestId: gptResult.requestId, data: gptResult.result },
+            image: { credits: 0, requestId: imageResult.requestId, data: imageResult.result },
+            song: { credits: 0, requestId: songResult.requestId, data: songResult.result },
+            video: { credits: 0, requestId: videoResult.requestId, data: videoResult.result }
           },
+          isMarginBased: !!(marginPercent && marginPercent > 0),
+          isBatch: !!batchId,
+          marginPercent: marginPercent,
         },
         state: "completed",
       };
