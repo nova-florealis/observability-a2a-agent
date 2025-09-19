@@ -7,11 +7,11 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server/server.js",
-    "start:server": "node --loader ts-node/esm src/server/server.ts",
-    "start:client": "node --loader ts-node/esm src/client/client.ts",
-    "dev": "node --loader ts-node/esm src/server/server.ts",
-    "dev:server": "node --loader ts-node/esm src/server/server.ts",
-    "dev:client": "node --loader ts-node/esm src/client/client.ts",
+    "start:server": "tsx src/server/server.ts",
+    "start:client": "tsx src/client/client.ts",
+    "dev": "tsx src/server/server.ts",
+    "dev:server": "tsx src/server/server.ts",
+    "dev:client": "tsx src/client/client.ts",
     "test": "npm run start:client"
   },
   "keywords": [
@@ -34,6 +34,7 @@
     "@types/node": "^20.11.24",
     "@types/uuid": "^9.0.8",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.5",
     "typescript": "^5.3.3"
   },
   "engines": {

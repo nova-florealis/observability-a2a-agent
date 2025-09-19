@@ -24,7 +24,7 @@ const ZeroAddress = "0x0000000000000000000000000000000000000000";
 
 export const paymentsConfig = {
   environment: (process.env.NVM_ENVIRONMENT as EnvironmentName) || "staging_sandbox",
-  nvmApiKey: process.env.PUBLISHER_API_KEY!,
+  nvmApiKey: process.env.BUILDER_NVM_API_KEY!,
 };
 
 export const serverConfig = {

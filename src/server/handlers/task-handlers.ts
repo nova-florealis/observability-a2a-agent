@@ -3,7 +3,7 @@
  */
 
 import { v4 as uuidv4 } from "uuid";
-import type { TaskHandlerResult, Payments } from "@nevermined-io/payments";
+import type { TaskHandlerResult, Payments, StartAgentRequest } from "@nevermined-io/payments";
 import { callGPT, simulateImageGeneration, simulateSongGeneration, simulateVideoGeneration } from "../operations/index.js";
 import { applyMarginCalculation } from "../operations/utils.js";
 import type { GPTResult, ImageResult, SongResult, VideoResult } from "../types/operationTypes.js";
@@ -15,15 +15,16 @@ interface ServerConfig {
 export class TaskHandlers {
   constructor(private payments: Payments, private serverConfig: ServerConfig) {}
 
-  async handleGPTTextRequest(userText: string): Promise<TaskHandlerResult> {
+  async handleGPTTextRequest(userText: string, accessToken: string, startAgentRequest: StartAgentRequest): Promise<TaskHandlerResult> {
     const creditAmount = 5;
     const creditUsdRate = 1;
-    const marginPercent = 25;
-    
+    const marginPercent = 0; //25;
+
     try {
-      const response = await callGPT(this.payments, userText, creditAmount, creditUsdRate, marginPercent);
-      const finalCredits = await applyMarginCalculation(this.payments, response.requestId);
-      
+      const response = await callGPT(this.payments, userText, creditAmount, creditUsdRate, marginPercent, undefined, accessToken, startAgentRequest);
+      // const finalCredits = await applyMarginCalculation(this.payments, response.requestId);
+      const finalCredits = creditAmount;
+
       return {
         parts: [
           {
@@ -46,14 +47,15 @@ export class TaskHandlers {
     }
   }
 
-  async handleImageGenerationRequest(userText: string): Promise<TaskHandlerResult> {
+  async handleImageGenerationRequest(userText: string, accessToken: string, startAgentRequest: StartAgentRequest): Promise<TaskHandlerResult> {
     const creditAmount = 3;
     const creditUsdRate = 1;
-    const marginPercent = 25;
-    
+    const marginPercent = 0; //25;
+
     try {
-      const result = await simulateImageGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent);
-      const finalCredits = await applyMarginCalculation(this.payments, result.requestId);
+      const result = await simulateImageGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, undefined, accessToken, startAgentRequest);
+      // const finalCredits = await applyMarginCalculation(this.payments, result.requestId);
+      const finalCredits = creditAmount;
       
       return {
         parts: [
@@ -77,14 +79,15 @@ export class TaskHandlers {
     }
   }
 
-  async handleSongGenerationRequest(userText: string): Promise<TaskHandlerResult> {
+  async handleSongGenerationRequest(userText: string, accessToken: string, startAgentRequest: StartAgentRequest): Promise<TaskHandlerResult> {
     const creditAmount = 5;
     const creditUsdRate = 1;
-    const marginPercent = 25;
-    
+    const marginPercent = 0; //25;
+
     try {
-      const result = await simulateSongGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent);
-      const finalCredits = await applyMarginCalculation(this.payments, result.requestId);
+      const result = await simulateSongGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, undefined, accessToken, startAgentRequest);
+      // const finalCredits = await applyMarginCalculation(this.payments, result.requestId);
+      const finalCredits = creditAmount;
       
       return {
         parts: [
@@ -108,14 +111,15 @@ export class TaskHandlers {
     }
   }
 
-  async handleVideoGenerationRequest(userText: string): Promise<TaskHandlerResult> {
+  async handleVideoGenerationRequest(userText: string, accessToken: string, startAgentRequest: StartAgentRequest): Promise<TaskHandlerResult> {
     const creditAmount = 0.5;
     const creditUsdRate = 0.5;
-    const marginPercent = 0;
-    
+    const marginPercent = 0; //25;
+
     try {
-      const result = await simulateVideoGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent);
-      const finalCredits = await applyMarginCalculation(this.payments, result.requestId);
+      const result = await simulateVideoGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, undefined, accessToken, startAgentRequest);
+      // const finalCredits = await applyMarginCalculation(this.payments, result.requestId);
+      const finalCredits = creditAmount;
       
       return {
         parts: [
@@ -139,20 +143,21 @@ export class TaskHandlers {
     }
   }
 
-  async handleCombinedGenerationRequest(userText: string): Promise<TaskHandlerResult> {
+  async handleCombinedGenerationRequest(userText: string, accessToken: string, startAgentRequest: StartAgentRequest): Promise<TaskHandlerResult> {
     const creditAmount = 2; // Fixed cost for combined operations
     const creditUsdRate = 1;
-    const marginPercent = 25; // Apply 25% margin to batch
+    const marginPercent = 0; //25; // Apply 25% margin to batch
     const batchId = uuidv4();
     
     try {
-      const gptResult = await callGPT(this.payments, userText, creditAmount, creditUsdRate, marginPercent, batchId);
-      const imageResult = await simulateImageGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, batchId);
-      const songResult = await simulateSongGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, batchId);
-      const videoResult = await simulateVideoGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, batchId);
+      const gptResult = await callGPT(this.payments, userText, creditAmount, creditUsdRate, marginPercent, batchId, accessToken, startAgentRequest);
+      const imageResult = await simulateImageGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, batchId, accessToken, startAgentRequest);
+      const songResult = await simulateSongGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, batchId, accessToken, startAgentRequest);
+      const videoResult = await simulateVideoGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, batchId, accessToken, startAgentRequest);
       
       // Apply batch margin calculation once for the entire batch
-      const totalCredits = await applyMarginCalculation(this.payments, gptResult.requestId, batchId);
+      // const totalCredits = await applyMarginCalculation(this.payments, gptResult.requestId, batchId);
+      const totalCredits = creditAmount;
       
       return {
         parts: [
@@ -183,7 +188,7 @@ export class TaskHandlers {
     }
   }
 
-  async handleGeneralRequest(userText: string): Promise<TaskHandlerResult> {
+  async handleGeneralRequest(userText: string, accessToken: string, startAgentRequest: StartAgentRequest): Promise<TaskHandlerResult> {
     return {
       parts: [
         {

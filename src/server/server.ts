@@ -39,11 +39,15 @@ async function main() {
     // Create updated agent card with the actual IDs
     const updatedAgentCard = createAgentCard();
 
+    // Initialize the agent executor
+    console.log("🔧 Initializing agent executor...");
+    const agentExecutor = new ObservabilityAgentExecutor(paymentsService);
+
     // Start the A2A server
     console.log("🌐 Starting A2A server...");
     paymentsService.a2a.start({
       agentCard: updatedAgentCard,
-      executor: new ObservabilityAgentExecutor(paymentsService),
+      executor: agentExecutor,
       port: serverConfig.port,
       basePath: "/a2a/",
     });

@@ -1,4 +1,4 @@
-import { Payments } from "@nevermined-io/payments";
+import { Payments, StartAgentRequest } from "@nevermined-io/payments";
 import { generateDeterministicAgentId, generateSessionId } from "./utils.js";
 import { SongResult } from "../types/operationTypes.js";
 
@@ -8,7 +8,9 @@ export async function simulateSongGeneration(
   credit_amount?: number,
   credit_usd_rate?: number,
   margin_percent?: number,
-  batchId?: string
+  batchId?: string,
+  requestAccessToken?: string,
+  startAgentRequest?: StartAgentRequest
 ): Promise<SongResult> {
   console.log(`\nSimulating song generation for: "${prompt}"`);
   
@@ -19,16 +21,16 @@ export async function simulateSongGeneration(
   const customProperties = {
     agentid: agentId,
     sessionid: sessionId,
-    planid: process.env.NVM_PLAN_DID || 'did:nv:0000000000000000000000000000000000000000',
-    plan_type: process.env.NVM_PLAN_TYPE || 'credit_based',
-    credit_amount: credit_amount || 0,
-    credit_usd_rate: credit_usd_rate || 1,
-    credit_price_usd: (credit_usd_rate || 1) * (credit_amount || 0),
-    margin_percent: margin_percent || 0,
-    is_margin_based: margin_percent ? 1 : 0,
+    // planid: process.env.NVM_PLAN_DID || 'did:nv:0000000000000000000000000000000000000000',
+    // plan_type: process.env.NVM_PLAN_TYPE || 'credit_based',
+    credit_amount: String(credit_amount || 0),
+    credit_usd_rate: String(credit_usd_rate || 1),
+    credit_price_usd: String((credit_usd_rate || 1) * (credit_amount || 0)),
+    margin_percent: String(margin_percent || 0),
+    is_margin_based: String(margin_percent ? 1 : 0),
     operation: 'simulated_song_generation',
     batch_id: batchId || '',
-    is_batch_request: batchId ? 1 : 0
+    is_batch_request: String(batchId ? 1 : 0)
   };
 
   // Generate simulated song data first to match original pattern
@@ -74,7 +76,7 @@ export async function simulateSongGeneration(
     (internalResult) => internalResult.songResponse,
     (internalResult) => payments.observability.calculateSongUsage(internalResult.quota),
     'song',
-    requestId,
+    startAgentRequest!,
     customProperties
   );
   

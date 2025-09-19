@@ -10,13 +10,21 @@ import type { MessageSendParams, GetTaskResponse } from "@nevermined-io/payments
  */
 export async function sendMessage(client: any, message: string, operationType?: string): Promise<any> {
   const messageId = uuidv4();
+
+  // Get the access token from the client
+  const accessToken = await client._getAccessToken();
+  console.log('🔑 [Client Utils] Including bearer token in message metadata:', accessToken.substring(0, 20) + '...');
+
   const params: MessageSendParams = {
     message: {
       messageId,
       role: "user",
       kind: "message",
       parts: [{ kind: "text", text: message }],
-      metadata: operationType ? { operationType } : undefined,
+      metadata: {
+        ...(operationType ? { operationType } : {}),
+        bearerToken: accessToken
+      },
     },
   };
   const response = await client.sendA2AMessage(params);

@@ -7,7 +7,7 @@ import { Payments } from "@nevermined-io/payments";
 import "dotenv/config";
 
 // Import configuration and setup functions
-import { loadConfig, createA2AClient, checkPlanBalance } from './config/client-config.js';
+import { loadConfig, createA2AClient, checkPlanBalance, getOrBuyAccessToken } from './config/client-config.js';
 
 // Import webhook server
 import { startWebhookReceiver } from './services/webhook-server.js';
@@ -29,8 +29,10 @@ const payments = Payments.getInstance({
  */
 async function main() {
   console.log("🚀 Starting Observability A2A Agent Client Tests...\n");
-  
+
+  // Initialize access token for the client
   await checkPlanBalance(config, payments);
+  const accessToken = await getOrBuyAccessToken(config, payments);
   const client = createA2AClient(config, payments);
 
   // Start webhook receiver for push notifications
@@ -39,10 +41,10 @@ async function main() {
   // Run all test suites
   await testGPTTextGeneration(client);
   await testImageGeneration(client);
-  await testSongGeneration(client); 
+  await testSongGeneration(client);
   await testVideoGeneration(client);
   await testCombinedGeneration(client);
-  
+
   // Test streaming and push notifications
   await testStreamingSSE(client);
   await testPushNotification(client);
