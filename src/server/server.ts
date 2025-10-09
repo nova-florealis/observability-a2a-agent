@@ -50,6 +50,10 @@ async function main() {
       executor: agentExecutor,
       port: serverConfig.port,
       basePath: "/a2a/",
+      handlerOptions: {
+        defaultBatch: false,  // Batch mode by default for all requests
+        defaultMarginPercent: undefined,  // Use fixed credits (not margin-based)
+      },
     });
 
     console.log("🚀 Observability A2A Agent started successfully!");

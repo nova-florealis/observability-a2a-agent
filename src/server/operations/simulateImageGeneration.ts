@@ -1,5 +1,4 @@
 import { Payments, StartAgentRequest } from "@nevermined-io/payments";
-import { generateDeterministicAgentId, generateSessionId } from "./utils.js";
 import { ImageResult } from "../types/operationTypes.js";
 
 /**
@@ -12,20 +11,12 @@ function calculatePixels(width: number, height: number): number {
 export async function simulateImageGeneration(
   payments: Payments,
   prompt: string,
-  credit_amount?: number,
-  credit_usd_rate?: number,
-  margin_percent?: number,
-  batchId?: string,
-  startAgentRequest?: StartAgentRequest
+  startAgentRequest: StartAgentRequest
 ): Promise<ImageResult> {
   console.log(`\nSimulating image generation for: "${prompt}"`);
-  
-  const agentId = generateDeterministicAgentId();
-  const sessionId = generateSessionId();
-  
+
   // Create custom properties for image generation operations
-    // Create custom properties for GPT operations
-    const customProperties = {
+  const customProperties = {
       agentid: process.env.NVM_AGENT_ID!,
       sessionid: crypto.randomUUID(),
       operation: "simulated_image_generation",
@@ -84,12 +75,9 @@ export async function simulateImageGeneration(
     startAgentRequest!,
     customProperties
   );
-  
-  // Return result with credit information
+
   return {
     result: imageResult,
-    credits: credit_amount || 0,
     requestId,
-    isMarginBased: !!(margin_percent && margin_percent > 0)
   };
 }

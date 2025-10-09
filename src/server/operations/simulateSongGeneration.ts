@@ -1,21 +1,13 @@
 import { Payments, StartAgentRequest } from "@nevermined-io/payments";
-import { generateDeterministicAgentId, generateSessionId } from "./utils.js";
 import { SongResult } from "../types/operationTypes.js";
 
 export async function simulateSongGeneration(
   payments: Payments,
   prompt: string,
-  credit_amount?: number,
-  credit_usd_rate?: number,
-  margin_percent?: number,
-  batchId?: string,
-  startAgentRequest?: StartAgentRequest
+  startAgentRequest: StartAgentRequest
 ): Promise<SongResult> {
   console.log(`\nSimulating song generation for: "${prompt}"`);
-  
-  const agentId = generateDeterministicAgentId();
-  const sessionId = generateSessionId();
-  
+
   // Create custom properties for song generation operations
   const customProperties = {
     agentid: process.env.NVM_AGENT_ID!,
@@ -69,12 +61,9 @@ export async function simulateSongGeneration(
     startAgentRequest!,
     customProperties
   );
-  
-  // Return result with credit information
+
   return {
     result: songResult,
-    credits: credit_amount || 0,
     requestId,
-    isMarginBased: !!(margin_percent && margin_percent > 0)
   };
 }

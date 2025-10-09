@@ -4,12 +4,8 @@
 export interface OperationResult<T = any> {
   /** The original operation result data */
   result: T;
-  /** Final credit amount (pre-set or margin-adjusted) */
-  credits: number;
-  /** Request ID for tracking and cost analysis */
+  /** Request ID for tracking and observability */
   requestId: string;
-  /** Whether margin pricing was applied */
-  isMarginBased: boolean;
 }
 
 /**

@@ -5,11 +5,7 @@ import { GPTResult } from "../types/operationTypes.js";
 export async function callGPT(
   payments: Payments,
   prompt: string,
-  credit_amount?: number,
-  credit_usd_rate?: number,
-  margin_percent?: number,
-  batchId?: string,
-  startAgentRequest?: StartAgentRequest
+  startAgentRequest: StartAgentRequest
 ): Promise<GPTResult> {
   try {
     console.log(`\nCalling GPT with prompt: "${prompt}"`);    
@@ -48,13 +44,10 @@ export async function callGPT(
 
     const response = completion.choices[0]?.message?.content || "No response generated";
     console.log(`GPT Response: "${response}"`);
-    
-    // Return result with credit information
+
     return {
       result: response,
-      credits: credit_amount || 0,
       requestId,
-      isMarginBased: !!(margin_percent && margin_percent > 0)
     };
   } catch (error) {
     console.error("Error calling OpenAI API:", error);

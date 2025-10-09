@@ -1,5 +1,4 @@
 import { Payments, StartAgentRequest } from "@nevermined-io/payments";
-import { generateDeterministicAgentId, generateSessionId } from "./utils.js";
 import { VideoResult } from "../types/operationTypes.js";
 
 /**
@@ -12,20 +11,13 @@ function generateModelName(mode: string, duration: number, version: string): str
 export async function simulateVideoGeneration(
   payments: Payments,
   prompt: string,
-  credit_amount?: number,
-  credit_usd_rate?: number,
-  margin_percent?: number,
-  batchId?: string,
-  startAgentRequest?: StartAgentRequest
+  startAgentRequest: StartAgentRequest
 ): Promise<VideoResult> {
   // Randomly select 5s or 10s duration
   const finalDuration = Math.random() > 0.5 ? 5 : 10;
-  
+
   console.log(`\nSimulating video generation for: "${prompt}" (${finalDuration}s)`);
-  
-  const agentId = generateDeterministicAgentId();
-  const sessionId = generateSessionId();
-  
+
   // Create custom properties for video generation operations
   const customProperties = {
     agentid: process.env.NVM_AGENT_ID!,
@@ -83,12 +75,9 @@ export async function simulateVideoGeneration(
     startAgentRequest!,
     customProperties
   );
-  
-  // Return result with credit information
+
   return {
     result: videoResult,
-    credits: credit_amount || 0,
     requestId,
-    isMarginBased: !!(margin_percent && margin_percent > 0)
   };
 }

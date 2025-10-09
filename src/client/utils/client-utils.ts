@@ -19,7 +19,6 @@ export async function sendMessage(client: any, message: string, operationType?: 
       parts: [{ kind: "text", text: message }],
       metadata: {
         ...(operationType ? { operationType } : {}),
-        isBatch: true, // Enable batch mode for testing
       },
     },
   };
