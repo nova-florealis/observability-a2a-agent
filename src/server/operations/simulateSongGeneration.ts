@@ -9,7 +9,6 @@ export async function simulateSongGeneration(
   credit_usd_rate?: number,
   margin_percent?: number,
   batchId?: string,
-  requestAccessToken?: string,
   startAgentRequest?: StartAgentRequest
 ): Promise<SongResult> {
   console.log(`\nSimulating song generation for: "${prompt}"`);

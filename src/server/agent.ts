@@ -50,14 +50,6 @@ export class ObservabilityAgentExecutor implements AgentExecutor {
     console.log(`[Observability Agent] Operation type: ${operationType || 'auto-detect'}`);
 
     try {
-      // Extract bearer token from message metadata
-      const bearerToken = context.userMessage.metadata?.bearerToken as string;
-
-      // Use bearer token as access token (remove Bearer prefix if present)
-      const accessToken = bearerToken?.startsWith('Bearer ')
-        ? bearerToken.substring(7)
-        : bearerToken || "placeholder-access-token";
-
       // Extract validation result from message metadata (injected by middleware)
       // This eliminates the need for a redundant startProcessingRequest call
       const agentRequest = context.userMessage.metadata?.validation as any;
@@ -70,32 +62,32 @@ export class ObservabilityAgentExecutor implements AgentExecutor {
       switch (operationType) {
         case 'gpt_text':
           return {
-            result: await this.taskHandlers.handleGPTTextRequest(userText, accessToken, agentRequest),
+            result: await this.taskHandlers.handleGPTTextRequest(userText, agentRequest),
             expectsMoreUpdates: false,
           };
         case 'image_generation':
           return {
-            result: await this.taskHandlers.handleImageGenerationRequest(userText, accessToken, agentRequest),
+            result: await this.taskHandlers.handleImageGenerationRequest(userText, agentRequest),
             expectsMoreUpdates: false,
           };
         case 'song_generation':
           return {
-            result: await this.taskHandlers.handleSongGenerationRequest(userText, accessToken, agentRequest),
+            result: await this.taskHandlers.handleSongGenerationRequest(userText, agentRequest),
             expectsMoreUpdates: false,
           };
         case 'video_generation':
           return {
-            result: await this.taskHandlers.handleVideoGenerationRequest(userText, accessToken, agentRequest),
+            result: await this.taskHandlers.handleVideoGenerationRequest(userText, agentRequest),
             expectsMoreUpdates: false,
           };
         case 'combined_generation':
           return {
-            result: await this.taskHandlers.handleCombinedGenerationRequest(userText, accessToken, agentRequest),
+            result: await this.taskHandlers.handleCombinedGenerationRequest(userText, agentRequest),
             expectsMoreUpdates: false,
           };
         default:
           return {
-            result: await this.taskHandlers.handleGeneralRequest(userText, accessToken, agentRequest),
+            result: await this.taskHandlers.handleGeneralRequest(userText, agentRequest),
             expectsMoreUpdates: false,
           };
       }

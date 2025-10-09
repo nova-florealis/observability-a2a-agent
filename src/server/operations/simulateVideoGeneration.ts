@@ -16,7 +16,6 @@ export async function simulateVideoGeneration(
   credit_usd_rate?: number,
   margin_percent?: number,
   batchId?: string,
-  requestAccessToken?: string,
   startAgentRequest?: StartAgentRequest
 ): Promise<VideoResult> {
   // Randomly select 5s or 10s duration

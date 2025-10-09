@@ -9,7 +9,6 @@ export async function callGPT(
   credit_usd_rate?: number,
   margin_percent?: number,
   batchId?: string,
-  requestAccessToken?: string,
   startAgentRequest?: StartAgentRequest
 ): Promise<GPTResult> {
   try {

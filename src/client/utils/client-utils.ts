@@ -11,9 +11,6 @@ import type { MessageSendParams, GetTaskResponse } from "@nevermined-io/payments
 export async function sendMessage(client: any, message: string, operationType?: string): Promise<any> {
   const messageId = uuidv4();
 
-  // Get the access token from the client
-  const accessToken = await client._getAccessToken();
-
   const params: MessageSendParams = {
     message: {
       messageId,
@@ -22,7 +19,7 @@ export async function sendMessage(client: any, message: string, operationType?: 
       parts: [{ kind: "text", text: message }],
       metadata: {
         ...(operationType ? { operationType } : {}),
-        bearerToken: accessToken
+        isBatch: true, // Enable batch mode for testing
       },
     },
   };
