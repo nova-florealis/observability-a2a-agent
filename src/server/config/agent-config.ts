@@ -29,8 +29,8 @@ export const paymentsConfig = {
 
 export const serverConfig = {
   port: parseInt(process.env.PORT || "41244"),
-  agentId: process.env.NVM_AGENT_DID!,
-  planId: process.env.NVM_PLAN_DID!,
+  agentId: process.env.NVM_AGENT_ID!,
+  planId: process.env.NVM_PLAN_ID!,
   tokenAddress: "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as `0x${string}`,
 };
 

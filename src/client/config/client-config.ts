@@ -13,13 +13,13 @@ export interface ObservabilityAgentTestConfig {
 }
 
 export function loadConfig(): ObservabilityAgentTestConfig {
-  const { SUBSCRIBER_NVM_API_KEY, NVM_PLAN_DID, NVM_AGENT_DID, PORT } = process.env;
+  const { SUBSCRIBER_NVM_API_KEY, NVM_PLAN_ID, NVM_AGENT_ID, PORT } = process.env;
 
   return {
     environment: (process.env.NVM_ENVIRONMENT as EnvironmentName) || "testing",
     nvmApiKey: SUBSCRIBER_NVM_API_KEY!,
-    planId: NVM_PLAN_DID!,
-    agentId: NVM_AGENT_DID!,
+    planId: NVM_PLAN_ID!,
+    agentId: NVM_AGENT_ID!,
     baseUrl: `http://localhost:${PORT || 41244}/a2a`,
   };
 }

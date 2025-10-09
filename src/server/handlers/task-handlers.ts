@@ -5,8 +5,6 @@
 import { v4 as uuidv4 } from "uuid";
 import type { TaskHandlerResult, Payments, StartAgentRequest } from "@nevermined-io/payments";
 import { callGPT, simulateImageGeneration, simulateSongGeneration, simulateVideoGeneration } from "../operations/index.js";
-import { applyMarginCalculation } from "../operations/utils.js";
-import type { GPTResult, ImageResult, SongResult, VideoResult } from "../types/operationTypes.js";
 
 interface ServerConfig {
   planId: string;
@@ -22,7 +20,6 @@ export class TaskHandlers {
 
     try {
       const response = await callGPT(this.payments, userText, creditAmount, creditUsdRate, marginPercent, undefined, accessToken, startAgentRequest);
-      // const finalCredits = await applyMarginCalculation(this.payments, response.requestId);
       const finalCredits = creditAmount;
 
       return {
@@ -54,7 +51,6 @@ export class TaskHandlers {
 
     try {
       const result = await simulateImageGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, undefined, accessToken, startAgentRequest);
-      // const finalCredits = await applyMarginCalculation(this.payments, result.requestId);
       const finalCredits = creditAmount;
       
       return {
@@ -86,7 +82,6 @@ export class TaskHandlers {
 
     try {
       const result = await simulateSongGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, undefined, accessToken, startAgentRequest);
-      // const finalCredits = await applyMarginCalculation(this.payments, result.requestId);
       const finalCredits = creditAmount;
       
       return {
@@ -118,7 +113,6 @@ export class TaskHandlers {
 
     try {
       const result = await simulateVideoGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, undefined, accessToken, startAgentRequest);
-      // const finalCredits = await applyMarginCalculation(this.payments, result.requestId);
       const finalCredits = creditAmount;
       
       return {
@@ -156,7 +150,6 @@ export class TaskHandlers {
       const videoResult = await simulateVideoGeneration(this.payments, userText, creditAmount, creditUsdRate, marginPercent, batchId, accessToken, startAgentRequest);
       
       // Apply batch margin calculation once for the entire batch
-      // const totalCredits = await applyMarginCalculation(this.payments, gptResult.requestId, batchId);
       const totalCredits = creditAmount;
       
       return {

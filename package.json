@@ -23,7 +23,7 @@
     "openai"
   ],
   "dependencies": {
-    "@nevermined-io/payments": "file:./payments",
+    "@nevermined-io/payments": "1.0.0-rc19",
     "dotenv": "^16.5.0",
     "express": "^4.18.3",
     "openai": "^4.47.1",

@@ -25,20 +25,12 @@ export async function simulateImageGeneration(
   const sessionId = generateSessionId();
   
   // Create custom properties for image generation operations
-  const customProperties = {
-    agentid: agentId,
-    sessionid: sessionId,
-    // planid: process.env.NVM_PLAN_DID || 'did:nv:0000000000000000000000000000000000000000',
-    // plan_type: process.env.NVM_PLAN_TYPE || 'credit_based',
-    credit_amount: String(credit_amount || 0),
-    credit_usd_rate: String(credit_usd_rate || 1),
-    credit_price_usd: String((credit_usd_rate || 1) * (credit_amount || 0)),
-    margin_percent: String(margin_percent || 0),
-    is_margin_based: String(margin_percent ? 1 : 0),
-    operation: 'simulated_image_generation',
-    batch_id: batchId || '',
-    is_batch_request: String(batchId ? 1 : 0)
-  };
+    // Create custom properties for GPT operations
+    const customProperties = {
+      agentid: process.env.NVM_AGENT_ID!,
+      sessionid: crypto.randomUUID(),
+      operation: "simulated_image_generation",
+    };
 
   const SIMULATED_IMAGE_URLS = [
     "https://v3.fal.media/files/kangaroo/OyJfXujVSXxPby1bjYe--.png",
