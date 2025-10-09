@@ -48,34 +48,23 @@ export class ObservabilityAgentExecutor implements AgentExecutor {
 
     console.log(`[Observability Agent] Received message: ${userText}`);
     console.log(`[Observability Agent] Operation type: ${operationType || 'auto-detect'}`);
-    console.log(`🔑 [AgentExecutor] RequestContext keys:`, Object.keys(context));
-    console.log(`🔑 [AgentExecutor] TaskId:`, context.taskId);
-    console.log(`🔑 [AgentExecutor] Context details:`, JSON.stringify(context, null, 2));
 
     try {
       // Extract bearer token from message metadata
       const bearerToken = context.userMessage.metadata?.bearerToken as string;
-      console.log('🔑 [AgentExecutor] Bearer token from metadata:', bearerToken ? bearerToken.substring(0, 20) + '...' : 'not found');
 
       // Use bearer token as access token (remove Bearer prefix if present)
       const accessToken = bearerToken?.startsWith('Bearer ')
         ? bearerToken.substring(7)
         : bearerToken || "placeholder-access-token";
 
-      console.log('🔑 [AgentExecutor] Using access token:', accessToken.substring(0, 20) + '...');
+      // Extract validation result from message metadata (injected by middleware)
+      // This eliminates the need for a redundant startProcessingRequest call
+      const agentRequest = context.userMessage.metadata?.validation as any;
 
-      // Get proper agent request using the bearer token
-      const agentId = serverConfig.agentId;
-      const fullUrl = `http://localhost:${serverConfig.port}/a2a/`;
-
-      const agentRequest = await this.payments.requests.startProcessingRequest(
-        agentId,
-        `Bearer ${bearerToken}`,
-        fullUrl,
-        'POST'
-      );
-
-      console.log('🔑 [AgentExecutor] StartAgentRequest obtained:', !!agentRequest);
+      if (!agentRequest) {
+        throw new Error('Validation not found in message metadata. Middleware may not have injected it.');
+      }
 
       // Route to appropriate handler based on client-provided operation type or fallback to general
       switch (operationType) {

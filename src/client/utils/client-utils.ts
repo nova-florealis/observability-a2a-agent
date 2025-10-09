@@ -13,7 +13,6 @@ export async function sendMessage(client: any, message: string, operationType?: 
 
   // Get the access token from the client
   const accessToken = await client._getAccessToken();
-  console.log('🔑 [Client Utils] Including bearer token in message metadata:', accessToken.substring(0, 20) + '...');
 
   const params: MessageSendParams = {
     message: {
